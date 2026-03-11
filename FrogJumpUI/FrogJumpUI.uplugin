@@ -1,0 +1,29 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "FrogJumpUI",
+	"Description": "Frog Jump UI is an Unreal Engine plugin for structured UI management. Utilizing the Model-View-Controller (MVC) pattern, it ensures a clear separation of concerns. Its key feature is a stack-based navigation flow, enabling users to traverse UI screens like web pages, easily pushing new views and popping back to the previous one for predictable state management.",
+	"Category": "Other",
+	"CreatedBy": "GoldFrosch",
+	"CreatedByURL": "https://github.com/goldfrosch/FrogJumpUI",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "FrogJumpUI",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
+	]
+}

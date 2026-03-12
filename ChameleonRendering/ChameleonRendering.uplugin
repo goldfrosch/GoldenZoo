@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "ChameleonRendering",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "GoldFrosch",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ChameleonRendering",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

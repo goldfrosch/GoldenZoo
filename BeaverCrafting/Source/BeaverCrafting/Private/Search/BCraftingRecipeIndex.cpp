@@ -1,6 +1,43 @@
 #include "Search/BCraftingRecipeIndex.h"
 
 #include "Engine/DataTable.h"
+#include "Settings/SquirreltemSettings.h"
+
+namespace
+{
+	void ValidateItemReference(const USquirreltemSettings* ItemSettings, const int32 ItemId, const FName RecipeRowName, const TCHAR* FieldName)
+	{
+		if (ItemId == 0)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[BeaverCrafting] Recipe '%s' has an empty %s."),
+				*RecipeRowName.ToString(),
+				FieldName);
+			return;
+		}
+
+		if (ItemId < 0 || ItemId > MAX_uint16)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[BeaverCrafting] Recipe '%s' references out-of-range ItemId %d in %s."),
+				*RecipeRowName.ToString(),
+				ItemId,
+				FieldName);
+			return;
+		}
+
+		if (ItemSettings && ItemSettings->HasItemInfo(static_cast<uint16>(ItemId)))
+		{
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[BeaverCrafting] Recipe '%s' references unknown ItemId %d in %s."),
+			*RecipeRowName.ToString(),
+			ItemId,
+			FieldName);
+	}
+}
 
 FBCraftingRecipeIndex::FBCraftingRecipeIndex()
 {
@@ -103,6 +140,8 @@ bool FBCraftingRecipeIndexBuilder::BuildFromDataTable(UDataTable* RecipeTable, F
 		return false;
 	}
 
+	const USquirreltemSettings* ItemSettings = GetDefault<USquirreltemSettings>();
+
 	for (const TPair<FName, uint8*>& RowEntry : RecipeTable->GetRowMap())
 	{
 		const FName RecipeRowName = RowEntry.Key;
@@ -112,10 +151,16 @@ bool FBCraftingRecipeIndexBuilder::BuildFromDataTable(UDataTable* RecipeTable, F
 			continue;
 		}
 
+		ValidateItemReference(ItemSettings, RecipeRow->ResultItemId, RecipeRowName, TEXT("ResultItemId"));
+		for (const FBCraftingIngredientClause& IngredientClause : RecipeRow->IngredientClauses)
+		{
+			ValidateItemReference(ItemSettings, IngredientClause.ItemId, RecipeRowName, TEXT("IngredientClauses.ItemId"));
+		}
+
 		FBCraftingRecipeMatch Match;
 		Match.bFound = true;
 		Match.RecipeRowName = RecipeRowName;
-		Match.ResultId = RecipeRow->ResultId;
+		Match.ResultItemId = RecipeRow->ResultItemId;
 		Match.Priority = RecipeRow->Priority;
 
 		OutIndex.AddRecipe(RecipeRowName, RecipeRow->BuildSearchTokens(), Match);

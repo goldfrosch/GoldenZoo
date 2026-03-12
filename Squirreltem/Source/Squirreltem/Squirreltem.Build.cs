@@ -1,8 +1,8 @@
 using UnrealBuildTool;
 
-public class BeaverCrafting : ModuleRules
+public class Squirreltem : ModuleRules
 {
-	public BeaverCrafting(ReadOnlyTargetRules Target) : base(Target)
+	public Squirreltem(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -18,7 +18,9 @@ public class BeaverCrafting : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
-				"Squirreltem"
+				"Slate",
+				"SlateCore",
+				"DeveloperSettings"
 			}
 		);
 	}

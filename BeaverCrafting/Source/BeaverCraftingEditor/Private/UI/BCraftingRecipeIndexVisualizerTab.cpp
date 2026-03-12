@@ -38,12 +38,12 @@ namespace
 			return FText::FromString(FString::Printf(TEXT("%s: %s"), *Token.TokenType.ToString(), *Token.NameValue.ToString()));
 		}
 
-		if (Token.TokenType == BCraftingRecipeTokens::MaterialId)
+		if (Token.TokenType == BCraftingRecipeTokens::ItemId)
 		{
-			return FText::FromString(FString::Printf(TEXT("%s [ %s ]"), *Token.TokenType.ToString(), *Token.NameValue.ToString()));
+			return FText::FromString(FString::Printf(TEXT("%s [ %d ]"), *Token.TokenType.ToString(), Token.IntValue));
 		}
 
-		if (Token.TokenType == BCraftingRecipeTokens::MaterialCount)
+		if (Token.TokenType == BCraftingRecipeTokens::ItemCount)
 		{
 			return FText::FromString(FString::Printf(TEXT("%s ( %d )"), *Token.TokenType.ToString(), Token.IntValue));
 		}
@@ -162,9 +162,9 @@ FBCraftingRecipeIndexVisualizerTab::FTreeNodePtr FBCraftingRecipeIndexVisualizer
 	for (const FBCraftingRecipeMatch& Match : SourceNode->Matches)
 	{
 		FTreeNodePtr MatchNode = MakeShared<FTreeNode>();
-		MatchNode->Label = FText::FromString(FString::Printf(TEXT("Match | Row=%s | Result=%s | Priority=%d"),
+		MatchNode->Label = FText::FromString(FString::Printf(TEXT("Match | Row=%s | ResultItemId=%d | Priority=%d"),
 			*Match.RecipeRowName.ToString(),
-			*Match.ResultId.ToString(),
+			Match.ResultItemId,
 			Match.Priority));
 		NewNode->Children.Add(MatchNode);
 	}
@@ -193,9 +193,9 @@ void FBCraftingRecipeIndexVisualizerTab::RebuildTreeItems()
 	for (const FBCraftingRecipeMatch& Match : RootNode->Matches)
 	{
 		FTreeNodePtr MatchNode = MakeShared<FTreeNode>();
-		MatchNode->Label = FText::FromString(FString::Printf(TEXT("Match | Row=%s | Result=%s | Priority=%d"),
+		MatchNode->Label = FText::FromString(FString::Printf(TEXT("Match | Row=%s | ResultItemId=%d | Priority=%d"),
 			*Match.RecipeRowName.ToString(),
-			*Match.ResultId.ToString(),
+			Match.ResultItemId,
 			Match.Priority));
 		RootItem->Children.Add(MatchNode);
 	}

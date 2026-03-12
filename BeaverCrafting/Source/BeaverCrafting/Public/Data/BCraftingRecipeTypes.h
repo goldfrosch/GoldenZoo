@@ -8,8 +8,8 @@
 namespace BCraftingRecipeTokens
 {
 	extern BEAVERCRAFTING_API const FName ProductType;
-	extern BEAVERCRAFTING_API const FName MaterialId;
-	extern BEAVERCRAFTING_API const FName MaterialCount;
+	extern BEAVERCRAFTING_API const FName ItemId;
+	extern BEAVERCRAFTING_API const FName ItemCount;
 }
 
 USTRUCT(BlueprintType)
@@ -44,8 +44,8 @@ struct BEAVERCRAFTING_API FBCraftingIngredientClause
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting")
-	FName Key = NAME_None;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
+	int32 ItemId = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "1"))
 	int32 Count = 1;
@@ -58,8 +58,8 @@ struct BEAVERCRAFTING_API FBCraftingSelectionIngredient
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting")
-	FName MaterialId = NAME_None;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
+	int32 ItemId = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "1"))
 	int32 Count = 1;
@@ -84,8 +84,8 @@ struct BEAVERCRAFTING_API FBCraftingRecipeRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
-	FName ResultId = NAME_None;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
+	int32 ResultItemId = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
 	FName ProductType = NAME_None;
@@ -111,7 +111,7 @@ struct BEAVERCRAFTING_API FBCraftingRecipeMatch
 	FName RecipeRowName = NAME_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
-	FName ResultId = NAME_None;
+	int32 ResultItemId = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
 	int32 Priority = 0;

@@ -9,7 +9,8 @@ public class Squirreltem : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new[]
 			{
-				"Core"
+				"Core",
+				"GameplayTags"
 			}
 		);
 

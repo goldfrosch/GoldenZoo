@@ -6,7 +6,7 @@
 #include "ItemInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdateNotified);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryAddNotified, uint16, ItemId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryAddNotified, const FName&, ItemId);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SQUIRRELTEM_API UItemInventoryComponent : public UActorComponent
@@ -26,17 +26,17 @@ public:
 		return InventoryList;
 	}
 
-	virtual FItemMetaInfo GetFirstMetaInfo(const uint16 ItemId);
-	uint32 GetCurrentCount(const uint16 Id);
+	virtual FItemMetaInfo GetFirstMetaInfo(const FName& ItemId);
+	uint32 GetCurrentCount(const FName& Id);
 	uint32 AddItem(const FItemMetaInfo& ItemInfo);
-	bool HasItemInInventory(const uint32 Id, const uint32 Count);
+	bool HasItemInInventory(const FName& Id, const uint32 Count);
 	bool HasExactItemInInventory(const FItemMetaInfo& ItemMetaInfo);
 	bool DropItem(const uint16 Index, const uint32 Count);
-	bool RemoveItem(const uint16 Id, const uint32 Count);
+	bool RemoveItem(const FName& Id, const uint32 Count);
 	bool RemoveExactItem(const FItemMetaInfo& ItemInfo);
 	uint32 AddItemToInventory(const uint16 Index, const FItemMetaInfo& ItemInfo);
 
-	TMap<uint32, uint32> GetCurrentRemainItemValue() const
+	TMap<FName, uint32> GetCurrentRemainItemValue() const
 	{
 		return CurrentRemainItemValue;
 	}
@@ -63,14 +63,14 @@ private:
 	void UpdateInventory_Internal();
 	void UpdateCurrentRemainItemValue();
 
-	TMap<uint32, uint32> CurrentRemainItemValue;
+	TMap<FName, uint32> CurrentRemainItemValue;
 	TMap<FItemMetaInfo, uint32> CurrentRemainItemMetaValue;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Options", meta = (AllowPrivateAccess = true))
 	uint8 InventorySlotCount = 54;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Option|Test", meta = (AllowPrivateAccess = true))
-	TArray<uint32> InitialItemIdList;
+	TArray<FName> InitialItemIdList;
 
 	UPROPERTY()
 	TArray<FItemMetaInfo> InventoryList;

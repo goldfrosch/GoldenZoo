@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "GameplayTagContainer.h"
 
 #include "SquirreltemData.generated.h"
 
@@ -11,57 +12,10 @@ enum class EItemType : uint32
 	Undefined, Interactive, Equipment, Consume, Ingredient, Build, Max,
 };
 
-UENUM(BlueprintType)
-enum class EItemGrade : uint8
-{
-	None, Common, Uncommon, Rare, Unique,
-};
-
-UENUM()
-enum class EMetaDataKey : uint32
-{
-	None, Durability
-};
-
-UENUM()
-enum class EConstDataKey : uint32
-{
-	None, MaxDurability, ItemUseType, SocketName, GeneratedItemId,
-	ChanceBasedSpawnItemId,
-	ItemGrade,
-};
-
-USTRUCT(BlueprintType)
-struct SQUIRRELTEM_API FItemAmount
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", meta = (ClampMin = "0", UIMin = "0"))
-	int32 ItemId = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", meta = (ClampMin = "1", UIMin = "1"))
-	int32 Count = 1;
-
-	bool IsValid() const
-	{
-		return ItemId > 0 && Count > 0;
-	}
-};
-
 USTRUCT(BlueprintType)
 struct SQUIRRELTEM_API FItemInfoData : public FTableRowBase
 {
 	GENERATED_USTRUCT_BODY()
-
-	uint16 GetItemId() const
-	{
-		return ItemId;
-	}
-
-	void SetItemId(const uint16 NewItemId)
-	{
-		ItemId = NewItemId;
-	}
 
 	const FString& GetDisplayName() const
 	{
@@ -88,12 +42,12 @@ struct SQUIRRELTEM_API FItemInfoData : public FTableRowBase
 		return Thumbnail;
 	}
 
-	EItemGrade GetItemGrade() const
+	const FGameplayTag& GetItemGrade() const
 	{
 		return ItemGrade;
 	}
 
-	void SetItemGrade(const EItemGrade NewItemGrade)
+	void SetItemGrade(const FGameplayTag& NewItemGrade)
 	{
 		ItemGrade = NewItemGrade;
 	}
@@ -103,20 +57,17 @@ struct SQUIRRELTEM_API FItemInfoData : public FTableRowBase
 		return OnHandItemClass;
 	}
 
-	const TMap<EMetaDataKey, FString>& GetMetaData() const
+	const TMap<FGameplayTag, FString>& GetMetaData() const
 	{
 		return MetaData;
 	}
 
-	const TMap<EConstDataKey, FString>& GetConstData() const
+	const TMap<FGameplayTag, FString>& GetConstData() const
 	{
 		return ConstData;
 	}
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (AllowPrivateAccess = true, ClampMin = "0", UIMin = "0"))
-	uint16 ItemId = 0;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (AllowPrivateAccess = true))
 	FString DisplayName;
 
@@ -130,7 +81,7 @@ private:
 	TSoftObjectPtr<UTexture2D> Thumbnail;
 
 	UPROPERTY()
-	EItemGrade ItemGrade = EItemGrade::None;
+	FGameplayTag ItemGrade;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (AllowPrivateAccess = true))
 	TSubclassOf<AActor> OnHandItemClass;
@@ -139,10 +90,10 @@ private:
 	uint32 MaxItemCount = 0;
 
 	UPROPERTY()
-	TMap<EMetaDataKey, FString> MetaData;
+	TMap<FGameplayTag, FString> MetaData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (AllowPrivateAccess = true))
-	TMap<EConstDataKey, FString> ConstData;
+	TMap<FGameplayTag, FString> ConstData;
 };
 
 USTRUCT(BlueprintType)
@@ -150,12 +101,12 @@ struct SQUIRRELTEM_API FItemMetaInfo
 {
 	GENERATED_BODY()
 
-	uint16 GetId() const
+	FName GetId() const
 	{
 		return Id;
 	}
 
-	void SetId(const uint16 NewId)
+	void SetId(const FName& NewId)
 	{
 		Id = NewId;
 	}
@@ -165,17 +116,17 @@ struct SQUIRRELTEM_API FItemMetaInfo
 		return CurrentCount;
 	}
 
-	const TMap<EMetaDataKey, FString>& GetMetaData() const
+	const TMap<FGameplayTag, FString>& GetMetaData() const
 	{
 		return MetaData;
 	}
 
-	void SetMetaDataValue(const EMetaDataKey Key, const FString& Value)
+	void SetMetaDataValue(const FGameplayTag& Key, const FString& Value)
 	{
 		MetaData.Add(Key, Value);
 	}
 
-	void SetMetaData(const TMap<EMetaDataKey, FString>& NewMetaData)
+	void SetMetaData(const TMap<FGameplayTag, FString>& NewMetaData)
 	{
 		MetaData = NewMetaData;
 	}
@@ -197,14 +148,15 @@ struct SQUIRRELTEM_API FItemMetaInfo
 			return false;
 		}
 
-		for (const TTuple<EMetaDataKey, FString>& Data : MetaData)
+		for (const TTuple<FGameplayTag, FString>& Data : MetaData)
 		{
-			if (!CompareItem.MetaData.Contains(Data.Key))
+			const FString* CompareValue = CompareItem.MetaData.Find(Data.Key);
+			if (!CompareValue)
 			{
 				return false;
 			}
 
-			if (MetaData[Data.Key] != CompareItem.MetaData[Data.Key])
+			if (Data.Value != *CompareValue)
 			{
 				return false;
 			}
@@ -215,18 +167,17 @@ struct SQUIRRELTEM_API FItemMetaInfo
 
 	bool IsValid() const
 	{
-		return Id > 0;
+		return !Id.IsNone();
 	}
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (ClampMin = "0", ClampMax = "1000", UIMin = "0", UIMax = "1000"))
-	uint16 Id = 0;
+	FName Id;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (ClampMin = "0", ClampMax = "1000", UIMin = "0", UIMax = "1000"))
 	uint32 CurrentCount = 0;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
-	TMap<EMetaDataKey, FString> MetaData;
+	TMap<FGameplayTag, FString> MetaData;
 };
 
 FORCEINLINE uint32 GetTypeHash(const FItemMetaInfo& ItemMetaInfo)
@@ -234,58 +185,12 @@ FORCEINLINE uint32 GetTypeHash(const FItemMetaInfo& ItemMetaInfo)
 	uint32 DefaultHash = 0;
 	DefaultHash = HashCombine(DefaultHash, GetTypeHash(ItemMetaInfo.GetId()));
 
-	for (const TTuple<EMetaDataKey, FString>& MetaData : ItemMetaInfo.GetMetaData())
+	uint32 MetaDataHash = 0;
+	for (const TTuple<FGameplayTag, FString>& MetaData : ItemMetaInfo.GetMetaData())
 	{
-		DefaultHash = HashCombine(DefaultHash, GetTypeHash(MetaData));
+		const uint32 PairHash = HashCombine(GetTypeHash(MetaData.Key), GetTypeHash(MetaData.Value));
+		MetaDataHash ^= PairHash;
 	}
 
-	return DefaultHash;
+	return HashCombine(DefaultHash, MetaDataHash);
 }
-
-USTRUCT(BlueprintType)
-struct FItemMetaInfo_Net
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	int32 Id = 0;
-
-	UPROPERTY()
-	int32 Count = 0;
-
-	UPROPERTY()
-	TArray<EMetaDataKey> Keys;
-
-	UPROPERTY()
-	TArray<FString> Values;
-
-	FItemMetaInfo_Net()
-	{
-	}
-
-	FItemMetaInfo_Net(const FItemMetaInfo& Original)
-	{
-		Id = Original.GetId();
-		Count = static_cast<int32>(Original.GetCurrentCount());
-
-		for (const auto& Pair : Original.GetMetaData())
-		{
-			Keys.Add(Pair.Key);
-			Values.Add(Pair.Value);
-		}
-	}
-
-	void To(FItemMetaInfo& OutData) const
-	{
-		OutData.SetId(static_cast<uint16>(Id));
-		OutData.SetCurrentCount(Count);
-		TMap<EMetaDataKey, FString> MetaData;
-
-		for (int32 i = 0; i < Keys.Num(); ++i)
-		{
-			MetaData.Add(Keys[i], Values[i]);
-		}
-
-		OutData.SetMetaData(MetaData);
-	}
-};

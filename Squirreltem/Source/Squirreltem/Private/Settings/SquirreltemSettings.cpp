@@ -1,10 +1,16 @@
 #include "Settings/SquirreltemSettings.h"
 
 #include "Engine/DataTable.h"
+#include "SquirreltemTags.h"
 
 USquirreltemSettings::USquirreltemSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+}
+
+FName USquirreltemSettings::ConvertItemIdToName(const uint16 Id)
+{
+	return FName(*LexToString(Id));
 }
 
 #if WITH_EDITOR
@@ -42,7 +48,6 @@ void USquirreltemSettings::Initialize()
 		return;
 	}
 
-	uint16 NextFallbackItemId = 1;
 	for (const TPair<FName, uint8*>& RowEntry : LoadedDataTable->GetRowMap())
 	{
 		const FItemInfoData* InfoItem = reinterpret_cast<const FItemInfoData*>(RowEntry.Value);
@@ -52,71 +57,49 @@ void USquirreltemSettings::Initialize()
 		}
 
 		FItemInfoData ResolvedItemInfo = *InfoItem;
-		uint16 ResolvedItemId = ResolvedItemInfo.GetItemId();
-		if (ResolvedItemId == 0)
-		{
-			const FString RowNameAsString = RowEntry.Key.ToString();
-			if (RowNameAsString.IsNumeric())
-			{
-				const int32 ParsedItemId = FCString::Atoi(*RowNameAsString);
-				if (ParsedItemId > 0 && ParsedItemId <= MAX_uint16)
-				{
-					ResolvedItemId = static_cast<uint16>(ParsedItemId);
-				}
-			}
-		}
-
-		if (ResolvedItemId == 0)
-		{
-			while (ItemInfoById.Contains(NextFallbackItemId))
-			{
-				++NextFallbackItemId;
-			}
-
-			ResolvedItemId = NextFallbackItemId;
-			UE_LOG(LogTemp, Warning,
-				TEXT("[Squirreltem] Item row '%s' has no valid ItemId. Falling back to generated id %d."),
-				*RowEntry.Key.ToString(),
-				ResolvedItemId);
-		}
-
-		if (ItemInfoById.Contains(ResolvedItemId))
-		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("[Squirreltem] Duplicate ItemId %d detected for row '%s'. The row will be ignored."),
-				ResolvedItemId,
-				*RowEntry.Key.ToString());
-			continue;
-		}
-
-		ResolvedItemInfo.SetItemId(ResolvedItemId);
+		FName ResolvedItemId = RowEntry.Key;
+		
 		ItemInfoById.Add(ResolvedItemId, MoveTemp(ResolvedItemInfo));
-		NextFallbackItemId = FMath::Max<uint16>(NextFallbackItemId, ResolvedItemId + 1);
 	}
 }
 
-const FItemInfoData* USquirreltemSettings::FindItemInfoById(const uint16 Id) const
+const FItemInfoData* USquirreltemSettings::FindItemInfoById(const FName& Id) const
 {
 	return ItemInfoById.Find(Id);
 }
 
-bool USquirreltemSettings::HasItemInfo(const uint16 Id) const
+const FItemInfoData* USquirreltemSettings::FindItemInfoById(const uint16 Id) const
+{
+	return FindItemInfoById(ConvertItemIdToName(Id));
+}
+
+bool USquirreltemSettings::HasItemInfo(const FName& Id) const
 {
 	return ItemInfoById.Contains(Id);
 }
 
-const FItemInfoData& USquirreltemSettings::GetItemInfoById(const uint16 Id) const
+bool USquirreltemSettings::HasItemInfo(const uint16 Id) const
+{
+	return HasItemInfo(ConvertItemIdToName(Id));
+}
+
+const FItemInfoData& USquirreltemSettings::GetItemInfoById(const FName& Id) const
 {
 	if (const FItemInfoData* FoundItemInfo = FindItemInfoById(Id))
 	{
 		return *FoundItemInfo;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Requested unknown ItemId %d."), Id);
+	UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Requested unknown ItemId %s."), *Id.ToString());
 	return EmptyItemInfo;
 }
 
-FItemMetaInfo USquirreltemSettings::GetInitialItemMetaDataById(const uint16 Id) const
+const FItemInfoData& USquirreltemSettings::GetItemInfoById(const uint16 Id) const
+{
+	return GetItemInfoById(ConvertItemIdToName(Id));
+}
+
+FItemMetaInfo USquirreltemSettings::GetInitialItemMetaDataById(const FName& Id) const
 {
 	const FItemInfoData* InitialData = FindItemInfoById(Id);
 	if (!InitialData)
@@ -131,7 +114,12 @@ FItemMetaInfo USquirreltemSettings::GetInitialItemMetaDataById(const uint16 Id) 
 	return NewMetaInfo;
 }
 
-const FString* USquirreltemSettings::FindConstDataValue(const uint16 Id, const EConstDataKey Key) const
+FItemMetaInfo USquirreltemSettings::GetInitialItemMetaDataById(const uint16 Id) const
+{
+	return GetInitialItemMetaDataById(ConvertItemIdToName(Id));
+}
+
+const FString* USquirreltemSettings::FindConstDataValue(const FName& Id, const FGameplayTag& Key) const
 {
 	const FItemInfoData* ItemInfoData = FindItemInfoById(Id);
 	if (!ItemInfoData)
@@ -142,9 +130,9 @@ const FString* USquirreltemSettings::FindConstDataValue(const uint16 Id, const E
 	return ItemInfoData->GetConstData().Find(Key);
 }
 
-FString USquirreltemSettings::GetItemUsingType(const uint16 Id) const
+FString USquirreltemSettings::GetItemUsingType(const FName& Id) const
 {
-	if (const FString* FindData = FindConstDataValue(Id, EConstDataKey::ItemUseType))
+	if (const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_ItemUseType))
 	{
 		return *FindData;
 	}
@@ -152,7 +140,12 @@ FString USquirreltemSettings::GetItemUsingType(const uint16 Id) const
 	return FString();
 }
 
-FString USquirreltemSettings::GetItemCategoryTextById(const uint16 Id) const
+FString USquirreltemSettings::GetItemUsingType(const uint16 Id) const
+{
+	return GetItemUsingType(ConvertItemIdToName(Id));
+}
+
+FString USquirreltemSettings::GetItemCategoryTextById(const FName& Id) const
 {
 	const FItemInfoData* ItemInfoData = FindItemInfoById(Id);
 	if (!ItemInfoData)
@@ -179,21 +172,36 @@ FString USquirreltemSettings::GetItemCategoryTextById(const uint16 Id) const
 	}
 }
 
-bool USquirreltemSettings::IsItemCanHousing(const uint16 Id) const
+FString USquirreltemSettings::GetItemCategoryTextById(const uint16 Id) const
 {
-	const FString* FindData = FindConstDataValue(Id, EConstDataKey::ItemUseType);
+	return GetItemCategoryTextById(ConvertItemIdToName(Id));
+}
+
+bool USquirreltemSettings::IsItemCanHousing(const FName& Id) const
+{
+	const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_ItemUseType);
 	return FindData && FindData->Equals(TEXT("Housing"));
 }
 
-bool USquirreltemSettings::IsItemCanInteraction(const uint16 Id) const
+bool USquirreltemSettings::IsItemCanHousing(const uint16 Id) const
+{
+	return IsItemCanHousing(ConvertItemIdToName(Id));
+}
+
+bool USquirreltemSettings::IsItemCanInteraction(const FName& Id) const
 {
 	const FItemInfoData* ItemInfoData = FindItemInfoById(Id);
 	return ItemInfoData && ItemInfoData->GetItemType() == EItemType::Interactive;
 }
 
-bool USquirreltemSettings::IsInfiniteDurability(const uint16 Id) const
+bool USquirreltemSettings::IsItemCanInteraction(const uint16 Id) const
 {
-	const FString* FindData = FindConstDataValue(Id, EConstDataKey::MaxDurability);
+	return IsItemCanInteraction(ConvertItemIdToName(Id));
+}
+
+bool USquirreltemSettings::IsInfiniteDurability(const FName& Id) const
+{
+	const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_MaxDurability);
 	if (!FindData || FindData->IsEmpty() || !FindData->IsNumeric())
 	{
 		return false;
@@ -202,9 +210,30 @@ bool USquirreltemSettings::IsInfiniteDurability(const uint16 Id) const
 	return FCString::Atoi(**FindData) < 0;
 }
 
+bool USquirreltemSettings::IsInfiniteDurability(const uint16 Id) const
+{
+	return IsInfiniteDurability(ConvertItemIdToName(Id));
+}
+
+uint16 USquirreltemSettings::GetGeneratedOtherItemIdById(const FName& Id) const
+{
+	const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_GeneratedItemId);
+	if (!FindData || FindData->IsEmpty() || !FindData->IsNumeric())
+	{
+		return 0;
+	}
+
+	return static_cast<uint16>(FCString::Atoi(**FindData));
+}
+
 uint16 USquirreltemSettings::GetGeneratedOtherItemIdById(const uint16 Id) const
 {
-	const FString* FindData = FindConstDataValue(Id, EConstDataKey::GeneratedItemId);
+	return GetGeneratedOtherItemIdById(ConvertItemIdToName(Id));
+}
+
+uint16 USquirreltemSettings::GetChanceBasedSpawnItemIdById(const FName& Id) const
+{
+	const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_ChanceBasedSpawnItemId);
 	if (!FindData || FindData->IsEmpty() || !FindData->IsNumeric())
 	{
 		return 0;
@@ -215,22 +244,21 @@ uint16 USquirreltemSettings::GetGeneratedOtherItemIdById(const uint16 Id) const
 
 uint16 USquirreltemSettings::GetChanceBasedSpawnItemIdById(const uint16 Id) const
 {
-	const FString* FindData = FindConstDataValue(Id, EConstDataKey::ChanceBasedSpawnItemId);
-	if (!FindData || FindData->IsEmpty() || !FindData->IsNumeric())
-	{
-		return 0;
-	}
-
-	return static_cast<uint16>(FCString::Atoi(**FindData));
+	return GetChanceBasedSpawnItemIdById(ConvertItemIdToName(Id));
 }
 
-FName USquirreltemSettings::GetSocketNameById(const uint16 Id) const
+FName USquirreltemSettings::GetSocketNameById(const FName& Id) const
 {
-	const FString* FindData = FindConstDataValue(Id, EConstDataKey::SocketName);
+	const FString* FindData = FindConstDataValue(Id, SquirreltemGameplayTags::ConstData_SocketName);
 	if (!FindData || FindData->IsEmpty())
 	{
 		return NAME_None;
 	}
 
 	return FName(**FindData);
+}
+
+FName USquirreltemSettings::GetSocketNameById(const uint16 Id) const
+{
+	return GetSocketNameById(ConvertItemIdToName(Id));
 }

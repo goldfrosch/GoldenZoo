@@ -19,10 +19,10 @@ void UItemInventoryComponent::InitializeItemData()
 	InventoryList.SetNum(InventorySlotCount);
 
 #if WITH_EDITOR
-	for (const uint32 ItemId : InitialItemIdList)
+	for (const FName& ItemId : InitialItemIdList)
 	{
 		FItemMetaInfo InitItemInfo;
-		InitItemInfo.SetId(static_cast<uint16>(ItemId));
+		InitItemInfo.SetId(ItemId);
 		InitItemInfo.SetCurrentCount(1);
 		AddItem(InitItemInfo);
 	}
@@ -51,7 +51,7 @@ void UItemInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool UItemInventoryComponent::HasItemInInventory(const uint32 Id, const uint32 Count)
+bool UItemInventoryComponent::HasItemInInventory(const FName& Id, const uint32 Count)
 {
 	if (CurrentRemainItemValue.Find(Id))
 	{
@@ -116,18 +116,19 @@ uint32 UItemInventoryComponent::AddItemToInventory(const uint16 Index, const FIt
 	const FItemInfoData* ItemInfoById = ItemSettings ? ItemSettings->FindItemInfoById(ItemInfo.GetId()) : nullptr;
 	if (!ItemInfoById || ItemInfoById->GetMaxItemCount() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Cannot add unknown ItemId %d to inventory."), ItemInfo.GetId());
+		UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Cannot add unknown ItemId %s to inventory."), *ItemInfo.GetId().ToString());
 		return ItemInfo.GetCurrentCount();
 	}
 
 	const uint16 CurrentItemCount = InventoryList[Index].GetCurrentCount() + ItemInfo.GetCurrentCount();
 	const uint16 NextSetMainItemCount = UKismetMathLibrary::Min(CurrentItemCount, ItemInfoById->GetMaxItemCount());
 
-	if (InventoryList[Index].GetId() == 0)
+	if (InventoryList[Index].GetId().IsNone())
 	{
 		InventoryList[Index].SetId(ItemInfo.GetId());
 		InventoryList[Index].SetMetaData(ItemInfo.GetMetaData());
 	}
+	
 	InventoryList[Index].SetCurrentCount(NextSetMainItemCount);
 
 	int32 RemainCount = CurrentItemCount - ItemInfoById->GetMaxItemCount();
@@ -140,7 +141,7 @@ uint32 UItemInventoryComponent::AddItemToInventory(const uint16 Index, const FIt
 				break;
 			}
 
-			if (InventoryList[SlotIndex].GetId() == 0)
+			if (InventoryList[SlotIndex].GetId().IsNone())
 			{
 				FItemMetaInfo NewItemInfo;
 				NewItemInfo.SetId(ItemInfo.GetId());
@@ -187,7 +188,7 @@ bool UItemInventoryComponent::DropItem(const uint16 Index, const uint32 Count)
 	return true;
 }
 
-FItemMetaInfo UItemInventoryComponent::GetFirstMetaInfo(const uint16 ItemId)
+FItemMetaInfo UItemInventoryComponent::GetFirstMetaInfo(const FName& ItemId)
 {
 	for (const FItemMetaInfo& MetaInfo : InventoryList)
 	{
@@ -200,10 +201,10 @@ FItemMetaInfo UItemInventoryComponent::GetFirstMetaInfo(const uint16 ItemId)
 	return FItemMetaInfo();
 }
 
-uint32 UItemInventoryComponent::GetCurrentCount(const uint16 Id)
+uint32 UItemInventoryComponent::GetCurrentCount(const FName& Id)
 {
 	uint32 Result = 0;
-	if (Id == 0)
+	if (Id.IsNone())
 	{
 		return Result;
 	}
@@ -225,7 +226,7 @@ uint32 UItemInventoryComponent::AddItem(const FItemMetaInfo& ItemInfo)
 	const FItemInfoData* ItemInfoById = ItemSettings ? ItemSettings->FindItemInfoById(ItemInfo.GetId()) : nullptr;
 	if (!ItemInfoById || ItemInfoById->GetMaxItemCount() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Cannot stack unknown ItemId %d in inventory."), ItemInfo.GetId());
+		UE_LOG(LogTemp, Warning, TEXT("[Squirreltem] Cannot stack unknown ItemId %s in inventory."), *ItemInfo.GetId().ToString());
 		return ItemInfo.GetCurrentCount();
 	}
 
@@ -246,7 +247,7 @@ uint32 UItemInventoryComponent::AddItem(const FItemMetaInfo& ItemInfo)
 	{
 		for (int32 Index = 0; Index < GetInventorySlotCount(); ++Index)
 		{
-			if (InventoryList[Index].GetId() == 0)
+			if (InventoryList[Index].GetId().IsNone())
 			{
 				RemainResult = AddItemToInventory(Index, ItemInfo);
 				break;
@@ -263,7 +264,7 @@ uint32 UItemInventoryComponent::AddItem(const FItemMetaInfo& ItemInfo)
 	return 0;
 }
 
-bool UItemInventoryComponent::RemoveItem(const uint16 Id, const uint32 Count)
+bool UItemInventoryComponent::RemoveItem(const FName& Id, const uint32 Count)
 {
 	uint32 RemainNum = Count;
 	TArray<uint32> CanRemoveIndexList;

@@ -16,4 +16,7 @@ class BEAVERCRAFTINGEDITOR_API UBCraftingEditorSettings : public UDeveloperSetti
 public:
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
 	TSoftObjectPtr<UDataTable> RecipeTable;
+
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting|Flow")
+	FString CraftingFlowSearchRoot = TEXT("/Game");
 };

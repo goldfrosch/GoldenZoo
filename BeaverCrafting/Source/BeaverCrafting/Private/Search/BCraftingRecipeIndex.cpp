@@ -5,9 +5,9 @@
 
 namespace
 {
-	void ValidateItemReference(const USquirreltemSettings* ItemSettings, const int32 ItemId, const FName RecipeRowName, const TCHAR* FieldName)
+	void ValidateItemReference(const USquirreltemSettings* ItemSettings, const FName ItemId, const FName RecipeRowName, const TCHAR* FieldName)
 	{
-		if (ItemId == 0)
+		if (ItemId.IsNone())
 		{
 			UE_LOG(LogTemp, Warning,
 				TEXT("[BeaverCrafting] Recipe '%s' has an empty %s."),
@@ -16,25 +16,15 @@ namespace
 			return;
 		}
 
-		if (ItemId < 0 || ItemId > MAX_uint16)
-		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("[BeaverCrafting] Recipe '%s' references out-of-range ItemId %d in %s."),
-				*RecipeRowName.ToString(),
-				ItemId,
-				FieldName);
-			return;
-		}
-
-		if (ItemSettings && ItemSettings->HasItemInfo(static_cast<uint16>(ItemId)))
+		if (ItemSettings && ItemSettings->HasItemInfo(ItemId))
 		{
 			return;
 		}
 
 		UE_LOG(LogTemp, Warning,
-			TEXT("[BeaverCrafting] Recipe '%s' references unknown ItemId %d in %s."),
+			TEXT("[BeaverCrafting] Recipe '%s' references unknown ItemId '%s' in %s."),
 			*RecipeRowName.ToString(),
-			ItemId,
+			*ItemId.ToString(),
 			FieldName);
 	}
 }

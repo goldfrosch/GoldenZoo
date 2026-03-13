@@ -44,8 +44,8 @@ struct BEAVERCRAFTING_API FBCraftingIngredientClause
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
-	int32 ItemId = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting")
+	FName ItemId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "1"))
 	int32 Count = 1;
@@ -59,7 +59,7 @@ struct BEAVERCRAFTING_API FBCraftingSelectionIngredient
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
-	int32 ItemId = 0;
+	FName ItemId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeaverCrafting", meta = (ClampMin = "1"))
 	int32 Count = 1;
@@ -84,8 +84,8 @@ struct BEAVERCRAFTING_API FBCraftingRecipeRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting", meta = (ClampMin = "0", UIMin = "0"))
-	int32 ResultItemId = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
+	FName ResultItemId = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
 	FName ProductType = NAME_None;
@@ -111,7 +111,7 @@ struct BEAVERCRAFTING_API FBCraftingRecipeMatch
 	FName RecipeRowName = NAME_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
-	int32 ResultItemId = 0;
+	FName ResultItemId = NAME_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BeaverCrafting")
 	int32 Priority = 0;

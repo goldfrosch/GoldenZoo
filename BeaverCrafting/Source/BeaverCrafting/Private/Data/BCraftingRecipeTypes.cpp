@@ -25,7 +25,7 @@ namespace
 
 	struct FOrderedItemEntry
 	{
-		int32 ItemId = 0;
+		FName ItemId;
 		int32 Count = 1;
 	};
 
@@ -33,16 +33,16 @@ namespace
 	{
 		Entries.Sort([](const FOrderedItemEntry& Left, const FOrderedItemEntry& Right)
 		{
-			return Left.ItemId < Right.ItemId;
+			return Left.ItemId.Compare(Right.ItemId) < 0;
 		});
 	}
 
 	TArray<FOrderedItemEntry> BuildOrderedItemEntries(const TArray<FBCraftingIngredientClause>& Clauses)
 	{
-		TMap<int32, int32> CountByItemId;
+		TMap<FName, int32> CountByItemId;
 		for (const FBCraftingIngredientClause& Clause : Clauses)
 		{
-			if (Clause.ItemId == 0)
+			if (Clause.ItemId.IsNone())
 			{
 				continue;
 			}
@@ -52,7 +52,7 @@ namespace
 
 		TArray<FOrderedItemEntry> Entries;
 		Entries.Reserve(CountByItemId.Num());
-		for (const TPair<int32, int32>& Entry : CountByItemId)
+		for (const TPair<FName, int32>& Entry : CountByItemId)
 		{
 			FOrderedItemEntry& OrderedEntry = Entries.AddDefaulted_GetRef();
 			OrderedEntry.ItemId = Entry.Key;
@@ -65,10 +65,10 @@ namespace
 
 	TArray<FOrderedItemEntry> BuildOrderedItemEntries(const TArray<FBCraftingSelectionIngredient>& Ingredients)
 	{
-		TMap<int32, int32> CountByItemId;
+		TMap<FName, int32> CountByItemId;
 		for (const FBCraftingSelectionIngredient& Ingredient : Ingredients)
 		{
-			if (Ingredient.ItemId == 0)
+			if (Ingredient.ItemId.IsNone())
 			{
 				continue;
 			}
@@ -78,7 +78,7 @@ namespace
 
 		TArray<FOrderedItemEntry> Entries;
 		Entries.Reserve(CountByItemId.Num());
-		for (const TPair<int32, int32>& Entry : CountByItemId)
+		for (const TPair<FName, int32>& Entry : CountByItemId)
 		{
 			FOrderedItemEntry& OrderedEntry = Entries.AddDefaulted_GetRef();
 			OrderedEntry.ItemId = Entry.Key;
@@ -109,7 +109,7 @@ bool FBCraftingSearchToken::LexicalLess(const FBCraftingSearchToken& Other) cons
 
 void FBCraftingIngredientClause::AppendSearchTokens(TArray<FBCraftingSearchToken>& OutTokens) const
 {
-	OutTokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, NAME_None, ItemId));
+	OutTokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, ItemId, 0));
 	OutTokens.Add(MakeToken(BCraftingRecipeTokens::ItemCount, NAME_None, GetNormalizedCount(Count)));
 }
 
@@ -123,7 +123,7 @@ TArray<FBCraftingSearchToken> FBCraftingRecipeQuery::BuildSearchTokens() const
 
 	for (const FOrderedItemEntry& Ingredient : OrderedIngredients)
 	{
-		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, NAME_None, Ingredient.ItemId));
+		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, Ingredient.ItemId, 0));
 		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemCount, NAME_None, Ingredient.Count));
 	}
 
@@ -140,7 +140,7 @@ TArray<FBCraftingSearchToken> FBCraftingRecipeRow::BuildSearchTokens() const
 
 	for (const FOrderedItemEntry& Clause : OrderedClauses)
 	{
-		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, NAME_None, Clause.ItemId));
+		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemId, Clause.ItemId, 0));
 		Tokens.Add(MakeToken(BCraftingRecipeTokens::ItemCount, NAME_None, Clause.Count));
 	}
 

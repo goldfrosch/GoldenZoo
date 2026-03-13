@@ -9,15 +9,17 @@ public class BeaverCrafting : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new[]
 			{
-				"Core"
+				"Core",
+				"CoreUObject",
+				"Engine",
+				"GameplayTags"
 			}
 		);
 
 		PrivateDependencyModuleNames.AddRange(
 			new[]
 			{
-				"CoreUObject",
-				"Engine",
+				"AssetRegistry",
 				"Squirreltem"
 			}
 		);

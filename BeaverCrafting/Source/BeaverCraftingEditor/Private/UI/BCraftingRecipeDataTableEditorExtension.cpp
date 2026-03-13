@@ -24,7 +24,8 @@ void FBCraftingRecipeDataTableEditorExtension::Register()
 {
 	FDataTableEditorModule& DataTableEditorModule = FModuleManager::LoadModuleChecked<FDataTableEditorModule>("DataTableEditor");
 
-	FAssetEditorExtender ExtenderDelegate = FAssetEditorExtender::CreateRaw(this, &FBCraftingRecipeDataTableEditorExtension::ExtendRecipeDataTableToolbar);
+	const FAssetEditorExtender ExtenderDelegate = FAssetEditorExtender::CreateRaw(this, 
+		&FBCraftingRecipeDataTableEditorExtension::ExtendRecipeDataTableToolbar);
 	DataTableToolbarExtenderHandle = ExtenderDelegate.GetHandle();
 	DataTableEditorModule.GetToolBarExtensibilityManager()->GetExtenderDelegates().Add(ExtenderDelegate);
 }
@@ -58,7 +59,7 @@ TSharedRef<FExtender> FBCraftingRecipeDataTableEditorExtension::ExtendRecipeData
 			TEXT("DataTableCommands"),
 			EExtensionHook::After,
 			CommandList,
-			FToolBarExtensionDelegate::CreateRaw(this, &FBCraftingRecipeDataTableEditorExtension::AddRecipeDataTableToolbar, TWeakObjectPtr<UDataTable>(RecipeTable)));
+			FToolBarExtensionDelegate::CreateRaw(this, &FBCraftingRecipeDataTableEditorExtension::AddRecipeDataTableToolbar, TWeakObjectPtr(RecipeTable)));
 	}
 
 	return Extender;
